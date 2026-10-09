@@ -11,6 +11,7 @@ Apple 芯片 Mac 通过 Windows SMB 共享使用 HP LaserJet 1020 的图形配�
 - 下载固定版本的 ARM64 驱动，核对固定 SHA-256 后请求系统管理员授权。
 - 创建独立的 `HP1020_SMB` 打印队列并提交 PDF 测试页。
 - 通过系统打印队列处理 Windows 认证，应用不收集或保存密码。
+- 确认并授权后删除已安装驱动和 `HP1020_SMB` 队列，删除前检查其他队列的驱动引用。
 
 ## 构建
 
@@ -24,6 +25,12 @@ xcode-select --install
 构建结果：`dist/HP1020 SMB 助手.app` 和 `dist/HP1020-SMB-Assistant.zip`。
 
 程序仅使用本地临时签名，没有 Apple Developer ID 签名或公证。首次打开可能需要通过 macOS 的正常安全批准流程；无需关闭 SIP 或全局安全保护。
+
+卸载安全检查的测试使用临时目录和模拟打印命令，不修改系统打印机或驱动：
+
+```sh
+python3 -m unittest discover -s tests -v
+```
 
 ## 使用
 
@@ -63,14 +70,17 @@ SHA-256: 60c133b5a53fcce4a4364e1da53d8815cf6b14549e4eba2e88f567fdb6ee950b
 
 ## 移除
 
-在系统设置 → 打印机与扫描仪中删除 `HP1020_SMB`。
+在助手中点击“删除已安装驱动”，确认后通过系统管理员授权。无需填写 Windows 地址或共享名。
 
-驱动文件会保留。只有确认没有其他队列使用该驱动时，才在 Finder 中前往 `/Library/Printers`，将 `hp-legacy-mac` 文件夹移到废纸篓（需要管理员授权）。
+此操作删除 `HP1020_SMB` 队列（包括未完成的打印任务）和 `/Library/Printers/hp-legacy-mac` 驱动目录。如果其他打印队列的 PPD 仍引用该目录、同名队列使用了其他驱动，或无法确认安装结构，卸载会停止并显示原因。
+
+已在系统设置中删除队列后，也可以用此按钮移除剩余驱动。删除后可再次安装。
 
 ## 源码与许可
 
 - `Sources/Main.swift`：原生界面、输入校验、下载与管理员安装流程。
 - `Resources/install.sh`：SMB 队列和 HP 1020 转换过滤器配置。
+- `Resources/uninstall.sh`：卸载前检查、移除打印队列与驱动文件。
 - `Resources/test.pdf`：测试页。
 - `scripts/build.sh`：构建与本地临时签名。
 

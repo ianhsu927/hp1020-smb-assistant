@@ -7,7 +7,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$ROOT/.build/module-ca
     -o "$APP/Contents/MacOS/HP1020Assistant" \
     -target arm64-apple-macos13.0 -module-cache-path "$ROOT/.build/module-cache"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
-cp "$ROOT/Resources/install.sh" "$ROOT/Resources/test.pdf" "$APP/Contents/Resources/"
+cp "$ROOT/Resources/install.sh" "$ROOT/Resources/uninstall.sh" "$ROOT/Resources/test.pdf" "$APP/Contents/Resources/"
 /usr/bin/codesign --force --deep --sign - "$APP"
 /usr/bin/codesign --verify --deep --strict "$APP"
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP" "$ROOT/dist/HP1020-SMB-Assistant.zip"

@@ -79,6 +79,16 @@ func command(_ path: String, _ args: [String]) throws -> String {
             return result + "\n任务已提交，不等于已打印成功。请检查纸张输出；若未打印，打开系统打印队列查看认证或错误信息。"
         }
     }
+    func uninstall() {
+        guard let script = Bundle.main.url(forResource: "uninstall", withExtension: "sh") else {
+            status = "操作未完成"; log = "应用缺少卸载脚本，请重新构建或下载完整应用。"
+            return
+        }
+        task("删除打印队列和驱动，正在请求管理员授权…") {
+            let cmd = ["/bin/sh", script.path].map(shellQuote).joined(separator: " ")
+            return try command("/usr/bin/osascript", ["-e", "do shell script " + appleQuote(cmd) + " with administrator privileges"])
+        }
+    }
     func diagnose() { task("读取打印队列…") {
         let p = try command("/usr/bin/lpstat", ["-p", "HP1020_SMB", "-l"])
         let jobs = try command("/usr/bin/lpstat", ["-o", "HP1020_SMB"])
@@ -88,6 +98,7 @@ func command(_ path: String, _ args: [String]) throws -> String {
 
 struct ContentView: View {
     @StateObject var m = Model()
+    @State private var confirmUninstall = false
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
@@ -116,11 +127,18 @@ struct ContentView: View {
                 .background(Color(nsColor: .textBackgroundColor)).clipShape(RoundedRectangle(cornerRadius: 8))
             HStack {
                 Button("打开打印机设置") { NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Print-Scan-Settings.extension")!) }
+                Button("删除已安装驱动", role: .destructive) { confirmUninstall = true }.disabled(m.busy)
                 Spacer()
                 Link("开源驱动与许可", destination: URL(string: "https://github.com/ardabeh/hp-legacy-mac")!)
             }
-            Text("社区实验方案：尚未验证 macOS 27 的实际打印；Windows 必须在线并已初始化打印机。安装会请求系统管理员授权。").font(.caption).foregroundStyle(.secondary)
+            Text("社区实验方案：尚未验证 macOS 27 的实际打印；Windows 必须在线并已初始化打印机。安装和删除驱动会请求系统管理员授权。").font(.caption).foregroundStyle(.secondary)
         }.padding(24).frame(width: 680, height: 550)
+        .alert("删除已安装驱动？", isPresented: $confirmUninstall) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive, action: m.uninstall)
+        } message: {
+            Text("将删除 HP1020_SMB 打印队列（包括未完成的打印任务）和 /Library/Printers/hp-legacy-mac 驱动文件。如果其他队列仍使用此驱动，删除会停止。此操作需要管理员授权，之后可重新安装。")
+        }
     }
 }
 @main struct PrinterApp: App {

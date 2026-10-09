@@ -11,10 +11,10 @@ FILTER=$BASE/hp1020-smb-filter
 case "$URI" in smb://*) ;; *) echo '无效的 SMB 地址'; exit 1;; esac
 [ -f "$BUNDLE/ppd/HP-LaserJet_1020.ppd.gz" ] && [ -x "$BUNDLE/bin/gs" ] && [ -x "$BUNDLE/bin/foo2zjs" ] || { echo '驱动资源不完整'; exit 1; }
 if /usr/bin/lpstat -p "$QUEUE" >/dev/null 2>&1; then
-    echo 'HP1020_SMB 队列已存在。请先在系统设置中移除这个队列，再重新安装。'; exit 1
+    echo 'HP1020_SMB 队列已存在。请先使用“删除已安装驱动”移除本工具的队列和驱动，再重新安装。'; exit 1
 fi
 if [ -e "$BASE" ]; then
-    echo '发现已安装的 hp-legacy-mac 驱动。为避免覆盖，停止安装。'; exit 1
+    echo '发现已安装的 hp-legacy-mac 驱动。为避免覆盖，停止安装。可使用“删除已安装驱动”检查并移除本工具安装的驱动。'; exit 1
 fi
 WORK=$(/usr/bin/mktemp -d)
 COPIED=no
